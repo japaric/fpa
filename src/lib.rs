@@ -305,6 +305,28 @@ macro_rules! scale {
     }
 }
 
+macro_rules! shift {
+    ($self:ident ($($shift:ident),+)) => {
+        $(
+            impl ops::Shl<$shift> for $self {
+                type Output = Self;
+
+                fn shl(self, rhs: $shift) -> Self {
+                    $self { bits: self.bits << rhs }
+                }
+            }
+
+            impl ops::Shr<$shift> for $self {
+                type Output = Self;
+
+                fn shr(self, rhs: $shift) -> Self {
+                    $self { bits: self.bits >> rhs }
+                }
+            }
+        )+
+    }
+}
+
 macro_rules! sub {
     ($self:ident) => {
         impl ops::Sub for $self {
@@ -737,6 +759,8 @@ mul_overflow!(F16P16, 16, i64, i32);
 
 scale!(F16P16, i32);
 
+shift!(F16P16 (u8, u16, u32, u64, usize));
+
 sub!(F16P16);
 
 sub_int!(F16P16, 16, i16, i32);
@@ -887,6 +911,8 @@ mul!(F1P15, 15, i32, i16);
 
 scale!(F1P15, i16);
 
+shift!(F1P15 (u8, u16, u32, u64, usize));
+
 sub!(F1P15);
 
 /// Range: `[-1.0, 1.0 - 2^-7]`. Precision: `2^-7`
@@ -1028,6 +1054,8 @@ div!(F1P7, 7, i16, i8);
 mul!(F1P7, 7, i16, i8);
 
 scale!(F1P7, i8);
+
+shift!(F1P7 (u8, u16, u32, u64, usize));
 
 sub!(F1P7);
 
@@ -1422,6 +1450,8 @@ mul_overflow!(F24P8, 8, i64, i32);
 
 scale!(F24P8, i32);
 
+shift!(F24P8 (u8, u16, u32, u64, usize));
+
 sub!(F24P8);
 
 sub_int!(F24P8, 8, i16, i32);
@@ -1549,6 +1579,8 @@ mul!(UF0P16, 16, u32, u16);
 
 scale!(UF0P16, u16);
 
+shift!(UF0P16 (u8, u16, u32, u64, usize));
+
 sub!(UF0P16);
 
 /// Range: `[0.0, 1.0 - 2^-8]`. Precision: `2^-8`
@@ -1658,6 +1690,8 @@ div!(UF0P8, 8, u16, u8);
 mul!(UF0P8, 8, u16, u8);
 
 scale!(UF0P8, u8);
+
+shift!(UF0P8 (u8, u16, u32, u64, usize));
 
 sub!(UF0P8);
 
@@ -2017,6 +2051,8 @@ div!(UF16P16, 16, u64, u32);
 mul!(UF16P16, 16, u64, u32);
 
 scale!(UF16P16, u32);
+
+shift!(UF16P16 (u8, u16, u32, u64, usize));
 
 sub!(UF16P16);
 
@@ -2386,6 +2422,8 @@ div!(UF24P8, 8, u64, u32);
 mul_overflow!(UF24P8, 8, u64, u32);
 
 scale!(UF24P8, u32);
+
+shift!(UF24P8 (u8, u16, u32, u64, usize));
 
 sub!(UF24P8);
 
