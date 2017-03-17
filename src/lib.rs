@@ -12,8 +12,8 @@
 //! The type `UFmPn` can store numbers in the range `[0, 2^m - 2^-n]` with a
 //! precision of `2^-n`.
 //!
-//! The type `FmPn` can store numbers in the range `[-2^(m-1), 2^(m-1) - 2^-n]` with a
-//! precision of `2^-n`.
+//! The type `FmPn` can store numbers in the range `[-2^(m-1), 2^(m-1) - 2^-n]`
+//! with a precision of `2^-n`.
 //!
 //! # Initialization
 //!
@@ -385,13 +385,21 @@ impl F16P16 {
     }
 
     /// Formats the value into `buffer`
-    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 23]) -> &'s str {
+    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 23]) -> Str<'s> {
         const DIVISOR: u32 = 1 << 16;
-        // index of b'.' in `buffer`
+        // Byte index of b'.' in `buffer`
         const SPLIT: usize = 6;
 
         if self.bits == i32::MIN {
-            return "-32768";
+            const S: &'static [u8] = b"-32768";
+
+            buffer[..S.len()].copy_from_slice(S);
+
+            return Str {
+                       start: 0,
+                       end: S.len(),
+                       s: unsafe { mk_str(buffer.as_ptr(), S.len()) },
+                   };
         }
 
         let mut int = (self.bits.abs() >> 16) as i16;
@@ -407,9 +415,13 @@ impl F16P16 {
         let frac = u32(self.bits.abs() as u16);
 
         if frac == 0 {
-            return unsafe {
-                       mk_str(buffer.as_ptr().offset(start as isize),
-                              SPLIT - start)
+            return Str {
+                       start: start,
+                       end: SPLIT,
+                       s: unsafe {
+                           mk_str(buffer.as_ptr().offset(start as isize),
+                                  SPLIT - start)
+                       },
                    };
         }
 
@@ -422,8 +434,12 @@ impl F16P16 {
         };
 
         unsafe {
-            mk_str(buffer.as_ptr().offset(start as isize),
-                   end + SPLIT + 1 - start)
+            Str {
+                start: start,
+                end: SPLIT + end + 1,
+                s: mk_str(buffer.as_ptr().offset(start as isize),
+                          end + SPLIT + 1 - start),
+            }
         }
     }
 }
@@ -745,7 +761,7 @@ impl cast::From<F16P16> for usize {
 
 impl fmt::Display for F16P16 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.fmt(&mut [0; 23]))
+        f.write_str(&*self.fmt(&mut [0; 23]))
     }
 }
 
@@ -759,7 +775,7 @@ mul_overflow!(F16P16, 16, i64, i32);
 
 scale!(F16P16, i32);
 
-shift!(F16P16 (u8, u16, u32, u64, usize));
+shift!(F16P16(u8, u16, u32, u64, usize));
 
 sub!(F16P16);
 
@@ -779,15 +795,28 @@ impl F1P15 {
     }
 
     /// Formats the value into `buffer`
-    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 18]) -> &'s str {
+    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 18]) -> Str<'s> {
         const DIVISOR: u32 = 1 << 15;
-        // index of b'.' in `buffer`
+        // Byte index of b'.' in `buffer`
         const SPLIT: usize = 2;
 
         if self.bits == 0 {
-            return "0";
+            buffer[0] = b'0';
+
+            return Str {
+                       start: 0,
+                       end: 1,
+                       s: unsafe { mk_str(buffer.as_ptr(), 1) },
+                   };
         } else if self.bits == i16::MIN {
-            return "-1";
+            buffer[0] = b'-';
+            buffer[1] = b'1';
+
+            return Str {
+                       start: 0,
+                       end: 2,
+                       s: unsafe { mk_str(buffer.as_ptr(), 2) },
+                   };
         }
 
         buffer[1] = b'0';
@@ -805,10 +834,13 @@ impl F1P15 {
                   DIVISOR)
         };
 
-        unsafe {
-            mk_str(buffer.as_ptr()
-                       .offset(offset),
-                   i + SPLIT + 1 - offset as usize)
+        Str {
+            start: offset as usize,
+            end: i + SPLIT + 1,
+            s: unsafe {
+                mk_str(buffer.as_ptr().offset(offset),
+                       i + SPLIT + 1 - offset as usize)
+            },
         }
     }
 }
@@ -899,7 +931,7 @@ impl cast::From<F1P15> for f64 {
 
 impl fmt::Display for F1P15 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.fmt(&mut [0; 18]))
+        f.write_str(&*self.fmt(&mut [0; 18]))
     }
 }
 
@@ -911,7 +943,7 @@ mul!(F1P15, 15, i32, i16);
 
 scale!(F1P15, i16);
 
-shift!(F1P15 (u8, u16, u32, u64, usize));
+shift!(F1P15(u8, u16, u32, u64, usize));
 
 sub!(F1P15);
 
@@ -929,14 +961,27 @@ impl F1P7 {
     }
 
     /// Formats the value into `buffer`
-    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 10]) -> &'s str {
+    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 10]) -> Str<'s> {
         const DIVISOR: u16 = 1 << 7;
         const SPLIT: usize = 2;
 
         if self.bits == 0 {
-            return "0";
+            buffer[0] = b'0';
+
+            return Str {
+                       start: 0,
+                       end: 1,
+                       s: unsafe { mk_str(buffer.as_ptr(), 1) },
+                   };
         } else if self.bits == i8::MIN {
-            return "-1";
+            buffer[0] = b'-';
+            buffer[1] = b'1';
+
+            return Str {
+                       start: 0,
+                       end: 2,
+                       s: unsafe { mk_str(buffer.as_ptr(), 2) },
+                   };
         }
 
         buffer[1] = b'0';
@@ -954,10 +999,13 @@ impl F1P7 {
                   DIVISOR)
         };
 
-        unsafe {
-            mk_str(buffer.as_ptr()
-                       .offset(offset),
-                   i + SPLIT + 1 - offset as usize)
+        Str {
+            start: offset as usize,
+            end: i + SPLIT + 1,
+            s: unsafe {
+                mk_str(buffer.as_ptr().offset(offset),
+                       i + SPLIT + 1 - offset as usize)
+            },
         }
     }
 }
@@ -1043,7 +1091,7 @@ impl cast::From<F1P7> for f64 {
 
 impl fmt::Display for F1P7 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.fmt(&mut [0; 10]))
+        f.write_str(&*self.fmt(&mut [0; 10]))
     }
 }
 
@@ -1055,7 +1103,7 @@ mul!(F1P7, 7, i16, i8);
 
 scale!(F1P7, i8);
 
-shift!(F1P7 (u8, u16, u32, u64, usize));
+shift!(F1P7(u8, u16, u32, u64, usize));
 
 sub!(F1P7);
 
@@ -1073,13 +1121,21 @@ impl F24P8 {
     }
 
     /// Formats the value into `buffer`
-    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 20]) -> &'s str {
+    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 20]) -> Str<'s> {
         const DIVISOR: u16 = 1 << 8;
         // index of b'.' in `buffer`
         const SPLIT: usize = 11;
 
         if self.bits == i32::MIN {
-            return "-8388608";
+            const S: &'static [u8] = b"-8388608";
+
+            buffer[..S.len()].copy_from_slice(S);
+
+            return Str {
+                       start: 0,
+                       end: S.len(),
+                       s: unsafe { mk_str(buffer.as_ptr(), S.len()) },
+                   };
         }
 
         let mut int = (self.bits.abs() >> 8) as i32;
@@ -1095,9 +1151,13 @@ impl F24P8 {
         let frac = u16(self.bits.abs() as u8);
 
         if frac == 0 {
-            return unsafe {
-                       mk_str(buffer.as_ptr().offset(start as isize),
-                              SPLIT - start)
+            return Str {
+                       start: start,
+                       end: SPLIT,
+                       s: unsafe {
+                           mk_str(buffer.as_ptr().offset(start as isize),
+                                  SPLIT - start)
+                       },
                    };
         }
 
@@ -1109,9 +1169,13 @@ impl F24P8 {
                   DIVISOR)
         };
 
-        unsafe {
-            mk_str(buffer.as_ptr().offset(start as isize),
-                   end + SPLIT + 1 - start)
+        Str {
+            start: start,
+            end: end + SPLIT + 1,
+            s: unsafe {
+                mk_str(buffer.as_ptr().offset(start as isize),
+                       end + SPLIT + 1 - start)
+            },
         }
     }
 }
@@ -1436,7 +1500,7 @@ impl cast::From<F24P8> for usize {
 
 impl fmt::Display for F24P8 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.fmt(&mut [0; 20]))
+        f.write_str(&*self.fmt(&mut [0; 20]))
     }
 }
 
@@ -1450,7 +1514,7 @@ mul_overflow!(F24P8, 8, i64, i32);
 
 scale!(F24P8, i32);
 
-shift!(F24P8 (u8, u16, u32, u64, usize));
+shift!(F24P8(u8, u16, u32, u64, usize));
 
 sub!(F24P8);
 
@@ -1470,25 +1534,34 @@ impl UF0P16 {
     }
 
     /// Formats the value into `buffer`
-    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 18]) -> &'s str {
+    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 18]) -> Str<'s> {
         const DIVISOR: u32 = 1 << 16;
-        // index of b'.' in `buffer`
+        // Byte index of b'.' in `buffer`
         const SPLIT: usize = 1;
 
         if self.bits == 0 {
-            return "0";
+            buffer[0] = b'0';
+
+            return Str {
+                       start: 0,
+                       end: 1,
+                       s: unsafe { mk_str(buffer.as_ptr(), 1) },
+                   };
         }
 
         buffer[0] = b'0';
         buffer[SPLIT] = b'.';
 
         let i = unsafe {
-            fmt32(buffer.as_mut_ptr().offset(SPLIT as isize + 1), self.bits as u32, DIVISOR)
+            fmt32(buffer.as_mut_ptr().offset(SPLIT as isize + 1),
+                  self.bits as u32,
+                  DIVISOR)
         };
 
-        unsafe {
-            str::from_utf8_unchecked(slice::from_raw_parts(buffer.as_ptr(),
-                                                           i + SPLIT + 1))
+        Str {
+            start: 0,
+            end: i + SPLIT + 1,
+            s: unsafe { mk_str(buffer.as_ptr(), i + SPLIT + 1) },
         }
     }
 }
@@ -1567,7 +1640,7 @@ impl cast::From<UF0P16> for f64 {
 
 impl fmt::Display for UF0P16 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.fmt(&mut [0u8; 18]))
+        f.write_str(&*self.fmt(&mut [0u8; 18]))
     }
 }
 
@@ -1579,7 +1652,7 @@ mul!(UF0P16, 16, u32, u16);
 
 scale!(UF0P16, u16);
 
-shift!(UF0P16 (u8, u16, u32, u64, usize));
+shift!(UF0P16(u8, u16, u32, u64, usize));
 
 sub!(UF0P16);
 
@@ -1597,13 +1670,19 @@ impl UF0P8 {
     }
 
     /// Formats the value into `buffer`
-    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 10]) -> &'s str {
+    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 10]) -> Str<'s> {
         const DIVISOR: u16 = 1 << 8;
-        // index of b'.' in `buffer`
+        // Byte index of b'.' in `buffer`
         const SPLIT: usize = 1;
 
         if self.bits == 0 {
-            return "0";
+            buffer[0] = b'0';
+
+            return Str {
+                       start: 0,
+                       end: 1,
+                       s: unsafe { mk_str(buffer.as_ptr(), 1) },
+                   };
         }
 
         buffer[0] = b'0';
@@ -1615,7 +1694,11 @@ impl UF0P8 {
                   DIVISOR)
         };
 
-        unsafe { mk_str(buffer.as_ptr(), i + SPLIT + 1) }
+        Str {
+            start: 0,
+            end: i + SPLIT + 1,
+            s: unsafe { mk_str(buffer.as_ptr(), i + SPLIT + 1) },
+        }
     }
 }
 
@@ -1679,7 +1762,7 @@ impl cast::From<UF0P8> for f64 {
 
 impl fmt::Display for UF0P8 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.fmt(&mut [0; 10]))
+        f.write_str(&*self.fmt(&mut [0; 10]))
     }
 }
 
@@ -1691,7 +1774,7 @@ mul!(UF0P8, 8, u16, u8);
 
 scale!(UF0P8, u8);
 
-shift!(UF0P8 (u8, u16, u32, u64, usize));
+shift!(UF0P8(u8, u16, u32, u64, usize));
 
 sub!(UF0P8);
 
@@ -1709,9 +1792,9 @@ impl UF16P16 {
     }
 
     /// Formats the value into `buffer`
-    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 22]) -> &'s str {
+    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 22]) -> Str<'s> {
         const DIVISOR: u32 = 1 << 16;
-        // index of b'.' in `buffer`
+        // Byte index of b'.' in `buffer`
         const SPLIT: usize = 5;
 
         let int = (self.bits >> 16) as u16;
@@ -1720,9 +1803,13 @@ impl UF16P16 {
         let frac = u32(self.bits as u16);
 
         if frac == 0 {
-            return unsafe {
-                       mk_str(buffer.as_ptr().offset(start as isize),
-                              SPLIT - start)
+            return Str {
+                       start: start,
+                       end: SPLIT,
+                       s: unsafe {
+                           mk_str(buffer.as_ptr().offset(start as isize),
+                                  SPLIT - start)
+                       },
                    };
         }
 
@@ -1734,9 +1821,13 @@ impl UF16P16 {
                   DIVISOR)
         };
 
-        unsafe {
-            mk_str(buffer.as_ptr().offset(start as isize),
-                   end + SPLIT + 1 - start)
+        Str {
+            start: start,
+            end: SPLIT + 1,
+            s: unsafe {
+                mk_str(buffer.as_ptr().offset(start as isize),
+                       end + SPLIT + 1 - start)
+            },
         }
     }
 }
@@ -2038,7 +2129,7 @@ impl cast::From<UF16P16> for isize {
 
 impl fmt::Display for UF16P16 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.fmt(&mut [0; 22]))
+        f.write_str(&*self.fmt(&mut [0; 22]))
     }
 }
 
@@ -2052,7 +2143,7 @@ mul!(UF16P16, 16, u64, u32);
 
 scale!(UF16P16, u32);
 
-shift!(UF16P16 (u8, u16, u32, u64, usize));
+shift!(UF16P16(u8, u16, u32, u64, usize));
 
 sub!(UF16P16);
 
@@ -2072,9 +2163,9 @@ impl UF24P8 {
     }
 
     /// Formats the value into `buffer`
-    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 19]) -> &'s str {
+    pub fn fmt<'s>(&self, buffer: &'s mut [u8; 19]) -> Str<'s> {
         const DIVISOR: u16 = 1 << 8;
-        // index of b'.' in `buffer`
+        // Byte index of b'.' in `buffer`
         const SPLIT: usize = 10;
 
         let int = self.bits >> 8;
@@ -2083,9 +2174,13 @@ impl UF24P8 {
         let frac = u16(self.bits as u8);
 
         if frac == 0 {
-            return unsafe {
-                       mk_str(buffer.as_ptr().offset(start as isize),
-                              SPLIT - start)
+            return Str {
+                       start: start,
+                       end: SPLIT,
+                       s: unsafe {
+                           mk_str(buffer.as_ptr().offset(start as isize),
+                                  SPLIT - start)
+                       },
                    };
         }
 
@@ -2097,9 +2192,13 @@ impl UF24P8 {
                   DIVISOR)
         };
 
-        unsafe {
-            mk_str(buffer.as_ptr().offset(start as isize),
-                   end + SPLIT + 1 - start)
+        Str {
+            start: start,
+            end: end + SPLIT + 1,
+            s: unsafe {
+                mk_str(buffer.as_ptr().offset(start as isize),
+                       end + SPLIT + 1 - start)
+            },
         }
     }
 }
@@ -2409,7 +2508,7 @@ impl cast::From<UF24P8> for usize {
 
 impl fmt::Display for UF24P8 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.fmt(&mut [0; 19]))
+        f.write_str(&*self.fmt(&mut [0; 19]))
     }
 }
 
@@ -2423,11 +2522,42 @@ mul_overflow!(UF24P8, 8, u64, u32);
 
 scale!(UF24P8, u32);
 
-shift!(UF24P8 (u8, u16, u32, u64, usize));
+shift!(UF24P8(u8, u16, u32, u64, usize));
 
 sub!(UF24P8);
 
 sub_int!(UF24P8, 8, u16, u32);
+
+/// Formatted fixed point number
+pub struct Str<'a> {
+    end: usize,
+    s: &'a str,
+    start: usize,
+}
+
+impl<'a> Str<'a> {
+    /// End byte offset of the formatted string wrt to the original buffer
+    ///
+    /// It holds that `&buffer[self.start()..self.end()] == self.deref()`
+    pub fn end(&self) -> usize {
+        self.end
+    }
+
+    /// Start byte offset of the formatted string wrt to the original buffer
+    ///
+    /// It holds that `&buffer[self.start()..self.end()] == self.deref()`
+    pub fn start(&self) -> usize {
+        self.start
+    }
+}
+
+impl<'a> ops::Deref for Str<'a> {
+    type Target = str;
+
+    fn deref(&self) -> &str {
+        self.s
+    }
+}
 
 unsafe fn fmt16(mut buffer: *mut u8, mut dividend: u16, divisor: u16) -> usize {
     let mut i = 0;
