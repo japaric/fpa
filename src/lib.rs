@@ -65,7 +65,7 @@
 //!
 //! use fpa::F1P7;
 //!
-//! assert_eq!(F1P7::new(0.25).fmt(&mut [0; 10]), "0.25")
+//! assert_eq!(&*F1P7::new(0.25).fmt(&mut [0; 10]), "0.25")
 //! ```
 
 #![cfg_attr(feature = "const-fn", feature(const_fn))]
@@ -441,6 +441,16 @@ impl F16P16 {
                           end + SPLIT + 1 - start),
             }
         }
+    }
+
+    /// Creates a `F16P16` from raw bits
+    pub fn from_raw_bits(bits: i32) -> Self {
+        F16P16 { bits: bits }
+    }
+
+    /// Turns `F16P16` into raw bits
+    pub fn into_raw_bits(&self) -> i32 {
+        self.bits
     }
 }
 
@@ -843,6 +853,16 @@ impl F1P15 {
             },
         }
     }
+
+    /// Creates a `F1P15` from raw bits
+    pub fn from_raw_bits(bits: i16) -> Self {
+        F1P15 { bits: bits }
+    }
+
+    /// Turns `F1P15` into raw bits
+    pub fn into_raw_bits(&self) -> i16 {
+        self.bits
+    }
 }
 
 impl cast::From<F1P15> for F1P15 {
@@ -1007,6 +1027,16 @@ impl F1P7 {
                        i + SPLIT + 1 - offset as usize)
             },
         }
+    }
+
+    /// Creates a `F1P7` from raw bits
+    pub fn from_raw_bits(bits: i8) -> Self {
+        F1P7 { bits: bits }
+    }
+
+    /// Turns `F1P7` into raw bits
+    pub fn into_raw_bits(&self) -> i8 {
+        self.bits
     }
 }
 
@@ -1177,6 +1207,16 @@ impl F24P8 {
                        end + SPLIT + 1 - start)
             },
         }
+    }
+
+    /// Creates a `F24P8` from raw bits
+    pub fn from_raw_bits(bits: i32) -> Self {
+        F24P8 { bits: bits }
+    }
+
+    /// Turns `F24P8` into raw bits
+    pub fn into_raw_bits(&self) -> i32 {
+        self.bits
     }
 }
 
@@ -1564,6 +1604,16 @@ impl UF0P16 {
             s: unsafe { mk_str(buffer.as_ptr(), i + SPLIT + 1) },
         }
     }
+
+    /// Creates a `UF0P16` from raw bits
+    pub fn from_raw_bits(bits: u16) -> Self {
+        UF0P16 { bits: bits }
+    }
+
+    /// Turns `UF0P16` into raw bits
+    pub fn into_raw_bits(&self) -> u16 {
+        self.bits
+    }
 }
 
 impl cast::From<F1P15> for UF0P16 {
@@ -1700,6 +1750,16 @@ impl UF0P8 {
             s: unsafe { mk_str(buffer.as_ptr(), i + SPLIT + 1) },
         }
     }
+
+    /// Creates a `UF0P8` from raw bits
+    pub fn from_raw_bits(bits: u8) -> Self {
+        UF0P8 { bits: bits }
+    }
+
+    /// Turns `UF0P8` into raw bits
+    pub fn into_raw_bits(&self) -> u8 {
+        self.bits
+    }
 }
 
 impl cast::From<F1P15> for UF0P8 {
@@ -1829,6 +1889,16 @@ impl UF16P16 {
                        end + SPLIT + 1 - start)
             },
         }
+    }
+
+    /// Creates a `UF16P16` from raw bits
+    pub fn from_raw_bits(bits: u32) -> Self {
+        UF16P16 { bits: bits }
+    }
+
+    /// Turns `UF16P16` into raw bits
+    pub fn into_raw_bits(&self) -> u32 {
+        self.bits
     }
 }
 
@@ -2200,6 +2270,16 @@ impl UF24P8 {
                        end + SPLIT + 1 - start)
             },
         }
+    }
+
+    /// Creates a `UF24P8` from raw bits
+    pub fn from_raw_bits(bits: u32) -> Self {
+        UF24P8 { bits: bits }
+    }
+
+    /// Turns `UF24P8` into raw bits
+    pub fn into_raw_bits(&self) -> u32 {
+        self.bits
     }
 }
 
