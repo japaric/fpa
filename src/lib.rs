@@ -384,6 +384,11 @@ impl F16P16 {
         F16P16 { bits: (x * (1 << 16) as f64) as i32 }
     }
 
+    /// Computes the absolute value of `self`
+    pub fn abs(self) -> Self {
+        F16P16 { bits: self.bits.abs() }
+    }
+
     /// Formats the value into `buffer`
     pub fn fmt<'s>(&self, buffer: &'s mut [u8; 23]) -> Str<'s> {
         const DIVISOR: u32 = 1 << 16;
@@ -804,6 +809,11 @@ impl F1P15 {
         F1P15 { bits: (x * (1 << 15) as f64) as i16 }
     }
 
+    /// Computes the absolute value of `self`
+    pub fn abs(self) -> Self {
+        F1P15 { bits: self.bits.abs() }
+    }
+
     /// Formats the value into `buffer`
     pub fn fmt<'s>(&self, buffer: &'s mut [u8; 18]) -> Str<'s> {
         const DIVISOR: u32 = 1 << 15;
@@ -980,6 +990,11 @@ impl F1P7 {
         F1P7 { bits: (x * (1 << 7) as f64) as i8 }
     }
 
+    /// Computes the absolute value of `self`
+    pub fn abs(self) -> Self {
+        F1P7 { bits: self.bits.abs() }
+    }
+
     /// Formats the value into `buffer`
     pub fn fmt<'s>(&self, buffer: &'s mut [u8; 10]) -> Str<'s> {
         const DIVISOR: u16 = 1 << 7;
@@ -1148,6 +1163,11 @@ impl F24P8 {
     #[cfg(feature = "const-fn")]
     pub const fn new(x: f64) -> Self {
         F24P8 { bits: (x * (1 << 8) as f64) as i32 }
+    }
+
+    /// Computes the absolute value of `self`
+    pub fn abs(self) -> Self {
+        F24P8 { bits: self.bits.abs() }
     }
 
     /// Formats the value into `buffer`
