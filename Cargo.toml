@@ -1,10 +1,16 @@
 [package]
-name = "fpa"
-version = "0.1.0"
 authors = ["Jorge Aparicio <japaricious@gmail.com>"]
+build = "build.rs"
+description = "Fixed point arithmetic"
+documentation = "https://docs.rs/fpa"
+keywords = ["no-std", "fixed", "point", "arithmetic"]
+license = "MIT OR Apache-2.0"
+name = "fpa"
+repository = "https://github.com/japaric/fpa"
+version = "0.1.0"
 
 [dependencies]
-numtoa = "0.0.7"
+typenum = "1.7.0"
 
 [dependencies.cast]
 default-features = false
