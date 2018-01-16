@@ -15,8 +15,8 @@
 //! Unlike IEEE floats, fixed points numbers have *fixed* precision. One can
 //! exchange range for precision by selecting different values for `x` and `y`:
 //!
-//! - Range: `[-2 ^ (y - 1), 2 ^ (y - 1) - 2 ^ (-x)]`
-//! - Precision: `2 ^ (-x)`
+//! - Range: `[-2 ^ (x - 1), 2 ^ (x - 1) - 2 ^ (-y)]`
+//! - Precision: `2 ^ (-y)`
 //!
 //! For example, the type `I1F7` has range `[-1, 0.9921875]` and precision
 //! `0.0078125`.
