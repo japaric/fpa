@@ -85,6 +85,7 @@
 
 extern crate cast;
 extern crate typenum;
+extern crate num_traits;
 
 use core::cmp::Ordering;
 use core::marker::PhantomData;
@@ -94,6 +95,8 @@ use cast::{Error, f32, f64, i16, i32, i64, i8, isize, u16, u32, u64, u8, usize};
 use typenum::{Cmp, Greater, Less, U0, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10,
               U11, U12, U13, U14, U15, U16, U17, U18, U19, U20, U21, U22, U23,
               U24, U25, U26, U27, U28, U29, U30, U31, U32, Unsigned};
+
+mod num_traits_impl;
 
 /// Fixed point number
 ///
@@ -170,11 +173,6 @@ macro_rules! q {
         }
 
         impl<FRAC> Q<$bits, FRAC> {
-            /// Returns the absolute value of `self`
-            pub fn abs(self) -> Self {
-                Q { bits: self.bits.abs(), _marker: PhantomData }
-            }
-
             /// Returns the bit pattern that represents `self`
             pub fn into_bits(self) -> $bits {
                 self.bits
@@ -436,6 +434,37 @@ macro_rules! q {
 
             fn neg(self) -> Self {
                 Q { bits: -self.bits, _marker: PhantomData }
+            }
+        }
+
+        impl<FRAC> ops::Rem<Q<$bits, FRAC>> for Q<$bits, FRAC>
+        where
+            FRAC: Unsigned,
+        {
+            type Output = Self;
+
+            fn rem(self, rhs: Self) -> Self {
+                let d = ($dbits(self.bits) << FRAC::to_u8()) % $dbits(rhs.bits);
+
+                let bits = match () {
+                    #[cfg(debug_assertions)]
+                    () => $bits(d).expect("attempt to multiply with overflow"),
+                    #[cfg(not(debug_assertions))]
+                    () => d as $bits,
+                };
+
+                Q { bits: bits, _marker: PhantomData }
+            }
+        }
+
+        impl<FRAC> ops::Rem<$bits> for Q<$bits, FRAC>
+        where
+            FRAC: Unsigned,
+        {
+            type Output = Self;
+
+            fn rem(self, rhs: $bits) -> Self {
+                Q { bits: self.bits % rhs, _marker: PhantomData }
             }
         }
 
