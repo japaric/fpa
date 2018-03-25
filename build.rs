@@ -1,7 +1,11 @@
+#[macro_use]
+extern crate quote;
+extern crate syn;
+
 use std::{env, fmt};
 use std::io::Write;
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 struct Q {
     bits: u8,
@@ -106,77 +110,101 @@ fn main() {
         }
     }
 
-    let mut buffer = String::new();
+    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 
-    buffer.push_str("#[test]");
-    buffer.push_str("fn cross() {");
-    for qx in &qs {
-        for qy in &qs {
-            // more legible but chokes rustc
-            // buffer.push_str(&format!("let qx = {}(0.5_f64).unwrap();\n", qx));
-            // if qy.ibits() < qx.ibits() {
-            //     buffer.push_str(&format!("let qy = {}(qx).unwrap();\n", qy));
-            // } else {
-            //     buffer.push_str(&format!("let qy = {}(qx);\n", qy));
-            // }
-            // buffer.push_str(&format!("assert_eq!(f64(qy), 0.5);\n"));
-
-            if qy.ibits() < qx.ibits() {
-                buffer.push_str(&format!("assert_eq!(f64({}({}(0.5_f64).unwrap()).unwrap()), 0.5);\n", qy, qx));
+    let cross_tests: Vec<_> = qs.iter().flat_map(|qx| {
+        let test_name = syn::Ident::from(format!("i{}f{}", qx.ibits(), qx.fbits));
+        let qx_name = syn::Ident::from(format!("{}", qx));
+        let asserts: Vec<_> = qs.iter().map(move |qy| {
+            let qy_name = syn::Ident::from(format!("{}", qy));
+            if qx.ibits() < qy.ibits() {
+                quote! {
+                    assert_eq!(f64(#qx_name(#qy_name(0.5_f64).unwrap()).unwrap()), 0.5);
+                }
             } else {
-                buffer.push_str(&format!("assert_eq!(f64({}({}(0.5_f64).unwrap())), 0.5);\n", qy, qx));
+                quote! {
+                    assert_eq!(f64(#qx_name(#qy_name(0.5_f64).unwrap())), 0.5);
+                }
+            }
+        }).collect();
+        quote! {
+            #[test]
+            fn #test_name() {
+                #(#asserts)*
             }
         }
-    }
-    buffer.push_str("}");
+    }).collect();
+    let cross_tokens = quote! { #(#cross_tests)* };
 
-    let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
-    let mut f = File::create(out_dir.join("cross.rs")).unwrap();
-    f.write_all(buffer.as_bytes()).unwrap();
+    let file_path = Path::new(&out_dir).join("cross.rs");
+    let mut f = File::create(&file_path).unwrap();
+    f.write_all(cross_tokens.to_string().as_bytes()).unwrap();
 
-    buffer.clear();
-    buffer.push_str("#[test]");
-    buffer.push_str("fn to_ixx() {");
-    for q in &qs {
-        for p in &PRIMITIVES {
-            let (f, i) = if q.ibits() == 1 {
+    let to_ixx_tests: Vec<_> = qs.iter().flat_map(|q| {
+        let test_name = syn::Ident::from(format!("i{}f{}", q.ibits(), q.fbits));
+        let q_name = syn::Ident::from(format!("{}", q));
+        let asserts: Vec<_> = PRIMITIVES.iter().map(move |p| {
+            let p_name = syn::Ident::from(format!("{}", p));
+            let (f, i): (f64, u8) = if q.ibits() == 1 {
                 (0.4, 0)
             } else {
                 (1.1, 1)
             };
-
             if p.ibits() < q.ibits() || !p.is_ixx() {
-                buffer.push_str(&format!("assert_eq!({}({}({}_f64).unwrap()).unwrap(), {});\n", p, q, f, i));
+                quote! {
+                    assert_eq!(#p_name(#q_name(#f).unwrap()).unwrap(), #i as #p_name);
+                }
             } else {
-                buffer.push_str(&format!("assert_eq!({}({}({}_f64).unwrap()), {});\n", p, q, f, i));
+                quote! {
+                    assert_eq!(#p_name(#q_name(#f).unwrap()), #i as #p_name);
+                }
+            }
+        }).collect();
+        quote! {
+            #[test]
+            fn #test_name() {
+                #(#asserts)*
             }
         }
-    }
-    buffer.push_str("}");
-    let mut f = File::create(out_dir.join("to-ixx.rs")).unwrap();
-    f.write_all(buffer.as_bytes()).unwrap();
+    }).collect();
+    let to_ixx_tokens = quote! { #(#to_ixx_tests)* };
 
-    buffer.clear();
-    buffer.push_str("#[test]");
-    buffer.push_str("fn from_ixx() {");
-    for q in &qs {
-        for p in &PRIMITIVES {
+    let file_path = Path::new(&out_dir).join("to-ixx.rs");
+    let mut f = File::create(&file_path).unwrap();
+    f.write_all(to_ixx_tokens.to_string().as_bytes()).unwrap();
+
+    let from_ixx_tests: Vec<_> = qs.iter().flat_map(|q| {
+        let test_name = syn::Ident::from(format!("i{}f{}", q.ibits(), q.fbits));
+        let q_name = syn::Ident::from(format!("{}", q));
+        let asserts: Vec<_> = PRIMITIVES.iter().map(move |p| {
+            let p_name = syn::Ident::from(format!("{}", p));
             let i = if q.ibits() == 1 {
                 0
             } else {
                 1
             };
-
             if p.ibits() <= q.ibits() {
-                buffer.push_str(&format!("assert_eq!(f64({}({}_{})), {1}.);\n", q, i, p));
+                quote! {
+                    assert_eq!(f64(#q_name(#i as #p_name)), #i as f64);
+                }
             } else {
-                buffer.push_str(&format!("assert_eq!(f64({}({}_{}).unwrap()), {1}.);\n", q, i, p));
+                quote! {
+                    assert_eq!(f64(#q_name(#i as #p_name).unwrap()), #i as f64);
+                }
+            }
+        }).collect();
+        quote! {
+            #[test]
+            fn #test_name() {
+                #(#asserts)*
             }
         }
-    }
-    buffer.push_str("}");
-    let mut f = File::create(out_dir.join("from-ixx.rs")).unwrap();
-    f.write_all(buffer.as_bytes()).unwrap();
+    }).collect();
+    let from_ixx_tokens = quote! { #(#from_ixx_tests)* };
+
+    let file_path = Path::new(&out_dir).join("from-ixx.rs");
+    let mut f = File::create(&file_path).unwrap();
+    f.write_all(from_ixx_tokens.to_string().as_bytes()).unwrap();
 
     println!("cargo:rerun-if-changed=build.rs");
 }
