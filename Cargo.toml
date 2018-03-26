@@ -15,6 +15,7 @@ repository = "https://github.com/japaric/fpa"
 version = "0.1.0"
 
 [dependencies]
+num-traits = "0.2.2"
 typenum = "1.7.0"
 
 [dependencies.cast]
