@@ -28,3 +28,4 @@ syn = "0.12.13"
 
 [features]
 const-fn = []
+try-from = []
