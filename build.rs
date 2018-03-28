@@ -63,6 +63,14 @@ impl Primitive {
             _ => false,
         }
     }
+
+    fn is_pointer_sized(&self) -> bool {
+        match *self {
+            Primitive::Usize => true,
+            Primitive::Isize => true,
+            _ => false,
+        }
+    }
 }
 
 impl fmt::Display for Primitive {
@@ -115,22 +123,50 @@ fn main() {
     let cross_tests: Vec<_> = qs.iter().flat_map(|qx| {
         let test_name = syn::Ident::from(format!("i{}f{}", qx.ibits(), qx.fbits));
         let qx_name = syn::Ident::from(format!("{}", qx));
-        let asserts: Vec<_> = qs.iter().map(move |qy| {
+
+        let mut cast_asserts = vec![];
+        let mut from_asserts = vec![];
+        let mut try_from_asserts = vec![];
+
+        for qy in qs.iter() {
             let qy_name = syn::Ident::from(format!("{}", qy));
             if qx.ibits() < qy.ibits() {
-                quote! {
+                cast_asserts.push(quote! {
                     assert_eq!(f64(#qx_name(#qy_name(0.5_f64).unwrap()).unwrap()), 0.5);
+                });
+                if cfg!(feature = "try-from") {
+                    try_from_asserts.push(quote! {
+                        assert_eq!(f64::from(#qx_name::try_from(#qy_name::try_from(0.5_f64).unwrap()).unwrap()), 0.5);
+                    });
                 }
             } else {
-                quote! {
+                cast_asserts.push(quote! {
                     assert_eq!(f64(#qx_name(#qy_name(0.5_f64).unwrap())), 0.5);
-                }
+                });
+                from_asserts.push(quote! {
+                    assert_eq!(f64::from(#qx_name::from(#qy_name::try_from(0.5_f64).unwrap())), 0.5);
+                });
             }
-        }).collect();
+        }
         quote! {
-            #[test]
-            fn #test_name() {
-                #(#asserts)*
+            mod #test_name {
+                use super::*;
+
+                #[test]
+                fn cast() {
+                    #(#cast_asserts)*
+                }
+
+                #[test]
+                fn from() {
+                    #(#from_asserts)*
+                }
+
+                #[test]
+                #[cfg(feature = "try-from")]
+                fn try_from() {
+                    #(#try_from_asserts)*
+                }
             }
         }
     }).collect();
@@ -140,10 +176,21 @@ fn main() {
     let mut f = File::create(&file_path).unwrap();
     f.write_all(cross_tokens.to_string().as_bytes()).unwrap();
 
+    let _ = ::std::process::Command::new("rustfmt")
+        .arg("--write-mode")
+        .arg("overwrite")
+        .arg(file_path.to_str().unwrap())
+        .output();
+
     let to_ixx_tests: Vec<_> = qs.iter().flat_map(|q| {
         let test_name = syn::Ident::from(format!("i{}f{}", q.ibits(), q.fbits));
         let q_name = syn::Ident::from(format!("{}", q));
-        let asserts: Vec<_> = PRIMITIVES.iter().map(move |p| {
+
+        let mut cast_asserts = vec![];
+        let mut from_asserts = vec![];
+        let mut try_from_asserts = vec![];
+
+        for p in PRIMITIVES.iter() {
             let p_name = syn::Ident::from(format!("{}", p));
             let (f, i): (f64, u8) = if q.ibits() == 1 {
                 (0.4, 0)
@@ -151,19 +198,44 @@ fn main() {
                 (1.1, 1)
             };
             if p.ibits() < q.ibits() || !p.is_ixx() {
-                quote! {
+                cast_asserts.push(quote! {
                     assert_eq!(#p_name(#q_name(#f).unwrap()).unwrap(), #i as #p_name);
+                });
+                if cfg!(feature = "try-from") && !p.is_pointer_sized() {
+                    try_from_asserts.push(quote! {
+                        assert_eq!(#p_name::try_from(#q_name::try_from(#f).unwrap()).unwrap(), #i as #p_name);
+                    });
                 }
             } else {
-                quote! {
+                cast_asserts.push(quote! {
                     assert_eq!(#p_name(#q_name(#f).unwrap()), #i as #p_name);
+                });
+                if !p.is_pointer_sized() {
+                    from_asserts.push(quote! {
+                        assert_eq!(#p_name::from(#q_name::try_from(#f).unwrap()), #i as #p_name);
+                    });
                 }
             }
-        }).collect();
+        }
         quote! {
-            #[test]
-            fn #test_name() {
-                #(#asserts)*
+            mod #test_name {
+                use super::*;
+
+                #[test]
+                fn cast() {
+                    #(#cast_asserts)*
+                }
+
+                #[test]
+                fn from() {
+                    #(#from_asserts)*
+                }
+
+                #[test]
+                #[cfg(feature = "try-from")]
+                fn try_from() {
+                    #(#try_from_asserts)*
+                }
             }
         }
     }).collect();
@@ -173,30 +245,62 @@ fn main() {
     let mut f = File::create(&file_path).unwrap();
     f.write_all(to_ixx_tokens.to_string().as_bytes()).unwrap();
 
+    let _ = ::std::process::Command::new("rustfmt")
+        .arg("--write-mode")
+        .arg("overwrite")
+        .arg(file_path.to_str().unwrap())
+        .output();
+
     let from_ixx_tests: Vec<_> = qs.iter().flat_map(|q| {
         let test_name = syn::Ident::from(format!("i{}f{}", q.ibits(), q.fbits));
         let q_name = syn::Ident::from(format!("{}", q));
-        let asserts: Vec<_> = PRIMITIVES.iter().map(move |p| {
+
+        let mut cast_asserts = vec![];
+        let mut from_asserts = vec![];
+        let mut try_from_asserts = vec![];
+
+        for p in PRIMITIVES.iter() {
             let p_name = syn::Ident::from(format!("{}", p));
-            let i = if q.ibits() == 1 {
-                0
-            } else {
-                1
-            };
+            let i = if q.ibits() == 1 { 0 } else { 1 };
             if p.ibits() <= q.ibits() {
-                quote! {
+                cast_asserts.push(quote! {
                     assert_eq!(f64(#q_name(#i as #p_name)), #i as f64);
+                });
+                if !p.is_pointer_sized() {
+                    from_asserts.push(quote! {
+                        assert_eq!(f64::from(#q_name::from(#i as #p_name)), #i as f64);
+                    });
                 }
             } else {
-                quote! {
+                cast_asserts.push(quote! {
                     assert_eq!(f64(#q_name(#i as #p_name).unwrap()), #i as f64);
+                });
+                if cfg!(feature = "try-from") && !p.is_pointer_sized() {
+                    try_from_asserts.push(quote! {
+                        assert_eq!(f64::from(#q_name::try_from(#i as #p_name).unwrap()), #i as f64);
+                    });
                 }
             }
-        }).collect();
+        }
         quote! {
-            #[test]
-            fn #test_name() {
-                #(#asserts)*
+            mod #test_name {
+                use super::*;
+
+                #[test]
+                fn cast() {
+                    #(#cast_asserts)*
+                }
+
+                #[test]
+                fn from() {
+                    #(#from_asserts)*
+                }
+
+                #[test]
+                #[cfg(feature = "try-from")]
+                fn try_from() {
+                    #(#try_from_asserts)*
+                }
             }
         }
     }).collect();
@@ -205,6 +309,12 @@ fn main() {
     let file_path = Path::new(&out_dir).join("from-ixx.rs");
     let mut f = File::create(&file_path).unwrap();
     f.write_all(from_ixx_tokens.to_string().as_bytes()).unwrap();
+
+    let _ = ::std::process::Command::new("rustfmt")
+        .arg("--write-mode")
+        .arg("overwrite")
+        .arg(file_path.to_str().unwrap())
+        .output();
 
     println!("cargo:rerun-if-changed=build.rs");
 }
