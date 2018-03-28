@@ -3648,7 +3648,7 @@ impl TryFrom<u16> for I16F16 {
     type Error = TryFromIntError;
 
     fn try_from(x: u16) -> Result<Self, Self::Error> {
-        i32::try_from(u32::from(x) << I16F16::fbits()).map(I16F16::from_bits)
+        Self::cast(x)
     }
 }
 
