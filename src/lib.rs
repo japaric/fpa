@@ -2655,7 +2655,7 @@ macro_rules! cast {
 
         #[cfg(feature = "try-from")]
         impl TryFrom<i16> for $medium16 {
-            type Error = <i8 as TryFrom<i16>>::Error;
+            type Error = TryFromIntError;
 
             fn try_from(x: i16) -> Result<Self, Self::Error> {
                 Self::cast(x)
