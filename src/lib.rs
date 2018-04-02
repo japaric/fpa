@@ -92,8 +92,8 @@ use core::cmp::Ordering;
 use core::marker::PhantomData;
 use core::{fmt, ops};
 
-#[cfg(feature = "try_from")]
-use core::convert::{TryFrom, Infallible};
+#[cfg(feature = "try-from")]
+use core::convert::TryFrom;
 
 use cast::{From as CastFrom, Error, f32, f64, i16, i32, i64, i8, isize, u16, u32, u64, u8, usize};
 use typenum::{Cmp, Greater, Less, U0, U1, U2, U3, U4, U5, U6, U7, U8, U9, U10,
@@ -192,7 +192,7 @@ macro_rules! q {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl<FRAC> TryFrom<f32> for Q<$bits, FRAC>
         where
             FRAC: Cmp<U0, Output = Greater> +
@@ -221,7 +221,7 @@ macro_rules! q {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl<FRAC> TryFrom<f64> for Q<$bits, FRAC>
         where
             FRAC: Cmp<U0, Output = Greater> +
@@ -878,29 +878,11 @@ macro_rules! cast {
      $(+ $large32:ident,)*
      $(| $medium32:ident $medium16:ident,)+
      $(- $small32:ident $small16:ident $small8:ident,)+) => {
-         #[cfg(feature = "try_from")]
-         impl TryFrom<$largest32> for isize {
-             type Error = Infallible;
-
-             fn try_from(x: $largest32) -> Result<Self, Self::Error> {
-                 Self::cast(x)
-             }
-         }
-
         impl cast::From<$largest32> for isize {
             type Output = Self;
 
             fn cast(x: $largest32) -> Self::Output {
                 isize(i32(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<isize> for $largest32 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: isize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -926,9 +908,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i64> for $largest32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -957,9 +939,9 @@ macro_rules! cast {
             }
 
             }
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i32> for $largest32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -991,9 +973,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$largest32> for i8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1022,29 +1004,11 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
-        impl TryFrom<$largest32> for usize {
-            type Error = TryFromIntError;
-
-            fn try_from(x: $largest32) -> Result<Self, Self::Error> {
-                Self::cast(x)
-            }
-        }
-
         impl cast::From<$largest32> for usize {
             type Output = Result<Self, Error>;
 
             fn cast(x: $largest32) -> Self::Output {
                 usize(i32(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<usize> for $largest32 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: usize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -1056,9 +1020,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$largest32> for u64 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1073,9 +1037,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u64> for $largest32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1090,9 +1054,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$largest32> for u32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1107,9 +1071,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u32> for $largest32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1124,9 +1088,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$largest32> for u16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1144,9 +1108,9 @@ macro_rules! cast {
         // Special case handled below
         // impl cast::From<u16> for $largest32 {}
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$largest32> for u8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1193,9 +1157,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$largest32> for $large32 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -1231,9 +1195,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$largest32> for $medium32 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -1265,9 +1229,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$largest32> for $medium16 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -1300,9 +1264,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$largest32> for $small32 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -1334,9 +1298,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$largest32> for $small16 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -1365,9 +1329,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$largest32> for $small8 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $largest32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -1393,29 +1357,11 @@ macro_rules! cast {
     (| $large32:ident $large16:ident,
      $(| $medium32:ident $medium16:ident,)*
      $(- $small32:ident $small16:ident $small8:ident,)+) => {
-         #[cfg(feature = "try_from")]
-         impl TryFrom<$large32> for isize {
-             type Error = Infallible;
-
-             fn try_from(x: $large32) -> Result<Self, Self::Error> {
-                 Self::cast(x)
-             }
-         }
-
         impl cast::From<$large32> for isize {
             type Output = Self;
 
             fn cast(x: $large32) -> Self::Output {
                 isize(i16(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<isize> for $large32 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: isize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -1441,9 +1387,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i64> for $large32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1472,9 +1418,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i32> for $large32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1503,9 +1449,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i16> for $large32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1537,29 +1483,11 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
-        impl TryFrom<$large32> for usize {
-            type Error = TryFromIntError;
-
-            fn try_from(x: $large32) -> Result<Self, Self::Error> {
-                Self::cast(x)
-            }
-        }
-
         impl cast::From<$large32> for usize {
             type Output = Result<Self, Error>;
 
             fn cast(x: $large32) -> Self::Output {
                 usize(i16(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<usize> for $large32 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: usize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -1571,9 +1499,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$large32> for u64 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $large32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1588,9 +1516,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u64> for $large32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1605,9 +1533,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$large32> for u32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $large32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1622,9 +1550,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u32> for $large32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1639,9 +1567,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$large32> for u16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $large32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1656,9 +1584,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u16> for $large32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1673,9 +1601,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$large32> for u8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $large32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1693,29 +1621,11 @@ macro_rules! cast {
         // Special case handled below
         // impl cast::From<u8> for $large32 {}
 
-        #[cfg(feature = "try_from")]
-        impl TryFrom<$large16> for isize {
-            type Error = <isize as TryFrom<i16>>::Error;
-
-            fn try_from(x: $large16) -> Result<Self, Self::Error> {
-                Self::cast(x)
-            }
-        }
-
         impl cast::From<$large16> for isize {
             type Output = Self;
 
             fn cast(x: $large16) -> Self::Output {
                 isize(i16(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<isize> for $large16 {
-            type Error = <i8 as TryFrom<isize>>::Error;
-
-            fn try_from(x: isize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -1741,9 +1651,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i64> for $large16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1772,9 +1682,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i32> for $large16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1803,9 +1713,9 @@ macro_rules! cast {
 
             }
         }
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i16> for $large16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1837,29 +1747,11 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
-        impl TryFrom<$large16> for usize {
-            type Error = TryFromIntError;
-
-            fn try_from(x: $large16) -> Result<Self, Self::Error> {
-                Self::cast(x)
-            }
-        }
-
         impl cast::From<$large16> for usize {
             type Output = Result<Self, Error>;
 
             fn cast(x: $large16) -> Self::Output {
                 usize(i16(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<usize> for $large16 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: usize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -1871,9 +1763,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$large16> for u64 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $large16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1888,12 +1780,12 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u64> for $large16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u64) -> Result<Self, Self::Error> {
-                iSelf::cast(x)
+                Self::cast(x)
             }
         }
 
@@ -1905,9 +1797,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$large16> for u32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $large16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1922,9 +1814,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u32> for $large16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1939,9 +1831,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$large16> for u16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $large16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1956,9 +1848,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u16> for $large16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -1973,9 +1865,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$large16> for u8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $large16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2044,9 +1936,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$large32> for $medium32 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $large32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -2078,9 +1970,9 @@ macro_rules! cast {
                 }
 
                 }
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$large32> for $medium16 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $large32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -2109,9 +2001,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$large16> for $medium32 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $large16) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -2142,9 +2034,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$large16> for $medium16 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $large16) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -2179,9 +2071,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$large32> for $small32 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $large32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -2213,9 +2105,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$large32> for $small16 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $large32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -2244,9 +2136,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$large32> for $small8 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $large32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -2275,9 +2167,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$large16> for $small32 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $large16) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -2308,9 +2200,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$large16> for $small16 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $large16) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -2341,9 +2233,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$large16> for $small8 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $large16) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -2369,26 +2261,11 @@ macro_rules! cast {
      $(- $small32:ident $small16:ident $small8:ident,)*) => {
         // Cast from/to primitives
 
-        impl From<$medium32> for isize {
-            fn from(x: $medium32) -> Self {
-                Self::cast(x)
-            }
-        }
-
         impl cast::From<$medium32> for isize {
             type Output = Self;
 
             fn cast(x: $medium32) -> Self::Output {
                 isize(i8(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<isize> for $medium32 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: isize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -2414,9 +2291,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i64> for $medium32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2445,9 +2322,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i32> for $medium32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2476,9 +2353,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i16> for $medium32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2507,9 +2384,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i8> for $medium32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i8) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2525,29 +2402,11 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
-        impl TryFrom<$medium32> for usize {
-            type Error = TryFromIntError;
-
-            fn try_from(x: $medium32) -> Result<Self, Self::Error> {
-                Self::cast(x)
-            }
-        }
-
         impl cast::From<$medium32> for usize {
             type Output = Result<Self, Error>;
 
             fn cast(x: $medium32) -> Self::Output {
                 usize(i8(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<usize> for $medium32 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: usize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -2559,9 +2418,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium32> for u64 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2576,9 +2435,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u64> for $medium32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2593,9 +2452,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium32> for u32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2610,9 +2469,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u32> for $medium32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2627,9 +2486,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium32> for u16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2644,9 +2503,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u16> for $medium32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2661,9 +2520,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium32> for u8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2678,9 +2537,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u8> for $medium32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u8) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2709,15 +2568,6 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
-        impl TryFrom<isize> for $medium16 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: isize) -> Result<Self, Self::Error> {
-                Self::cast(x)
-        }
-        }
-
         impl cast::From<isize> for $medium16 {
             type Output = Result<$medium16, Error>;
 
@@ -2740,9 +2590,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i64> for $medium16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2771,9 +2621,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i32> for $medium16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2802,9 +2652,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i16> for $medium16 {
-            type Error = <i8 as TryFrom<i16>>::Error;
+            type Error = Error;
 
             fn try_from(x: i16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2833,9 +2683,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i8> for $medium16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i8) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2851,29 +2701,11 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
-        impl TryFrom<$medium16> for usize {
-            type Error = TryFromIntError;
-
-            fn try_from(x: $medium16) -> Result<Self, Self::Error> {
-                Self::cast(x)
-            }
-        }
-
         impl cast::From<$medium16> for usize {
             type Output = Result<Self, Error>;
 
             fn cast(x: $medium16) -> Self::Output {
                 usize(i8(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<usize> for $medium16 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: usize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -2885,9 +2717,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium16> for u64 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2902,9 +2734,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u64> for $medium16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2919,9 +2751,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium16> for u32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2936,9 +2768,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u32> for $medium16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2953,9 +2785,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium16> for u16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2970,9 +2802,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u16> for $medium16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -2987,9 +2819,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium16> for u8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3004,9 +2836,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u8> for $medium16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u8) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3021,26 +2853,11 @@ macro_rules! cast {
             }
         }
 
-        impl From<$medium8> for isize {
-            fn from(x: $medium8) -> Self {
-                Self::cast(x)
-            }
-        }
-
         impl cast::From<$medium8> for isize {
             type Output = Self;
 
             fn cast(x: $medium8) -> Self::Output {
                 isize(i8(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<isize> for $medium8 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: isize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -3066,9 +2883,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i64> for $medium8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3097,9 +2914,9 @@ macro_rules! cast {
             }
 
             }
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i32> for $medium8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3128,9 +2945,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i16> for $medium8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3159,9 +2976,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<i8> for $medium8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: i8) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3177,29 +2994,11 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
-        impl TryFrom<$medium8> for usize {
-            type Error = TryFromIntError;
-
-            fn try_from(x: $medium8) -> Result<Self, Self::Error> {
-                Self::cast(x)
-            }
-        }
-
         impl cast::From<$medium8> for usize {
             type Output = Result<Self, Error>;
 
             fn cast(x: $medium8) -> Self::Output {
                 usize(i8(x))
-            }
-        }
-
-        #[cfg(feature = "try_from")]
-        impl TryFrom<usize> for $medium8 {
-            type Error = TryFromIntError;
-
-            fn try_from(x: usize) -> Result<Self, Self::Error> {
-                Self::cast(x)
             }
         }
 
@@ -3211,9 +3010,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium8> for u64 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium8) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3228,9 +3027,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u64> for $medium8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u64) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3245,9 +3044,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium8> for u32 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium8) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3262,9 +3061,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u32> for $medium8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u32) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3279,9 +3078,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium8> for u16 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium8) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3296,9 +3095,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u16> for $medium8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u16) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3313,9 +3112,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<$medium8> for u8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: $medium8) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3330,9 +3129,9 @@ macro_rules! cast {
             }
         }
 
-        #[cfg(feature = "try_from")]
+        #[cfg(feature = "try-from")]
         impl TryFrom<u8> for $medium8 {
-            type Error = TryFromIntError;
+            type Error = Error;
 
             fn try_from(x: u8) -> Result<Self, Self::Error> {
                 Self::cast(x)
@@ -3450,9 +3249,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$medium32> for $small32 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $medium32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -3483,9 +3282,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$medium32> for $small16 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $medium32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -3514,9 +3313,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$medium32> for $small8 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $medium32) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -3545,9 +3344,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$medium16> for $small32 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $medium16) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -3577,9 +3376,9 @@ macro_rules! cast {
                                           $medium16::fbits()))
                 }
             }
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$medium16> for $small16 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $medium16) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -3610,9 +3409,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$medium16> for $small8 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $medium16) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -3641,9 +3440,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$medium8> for $small32 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $medium8) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -3672,9 +3471,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$medium8> for $small16 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $medium8) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -3705,9 +3504,9 @@ macro_rules! cast {
                 }
             }
 
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$medium8> for $small8 {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $medium8) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -3772,9 +3571,9 @@ cast! {
 macro_rules! to_ixx {
     ($ixx:ident; $($q:ident),+) => {
         $(
-            #[cfg(feature = "try_from")]
+            #[cfg(feature = "try-from")]
             impl TryFrom<$q> for $ixx {
-                type Error = TryFromIntError;
+                type Error = Error;
 
                 fn try_from(x: $q) -> Result<Self, Self::Error> {
                     Self::cast(x)
@@ -3843,12 +3642,12 @@ to_ixx!(i16;
         I18F14,
         I17F15);
 
-#[cfg(feature = "try_from")]
+#[cfg(feature = "try-from")]
 impl TryFrom<u16> for I16F16 {
-    type Error = TryFromIntError;
+    type Error = Error;
 
     fn try_from(x: u16) -> Result<Self, Self::Error> {
-        i32::try_from(u32::from(x) << I16F16::fbits()).map(I16F16::from_bits)
+        Self::cast(x)
     }
 }
 
@@ -3893,7 +3692,7 @@ impl cast::From<I8F24> for i8 {
 
 to_ixx!(i8; I15F17, I14F18, I13F19, I12F20, I11F21, I10F22, I9F23);
 
-#[cfg(feature = "try_from")]
+#[cfg(feature = "try-from")]
 impl TryFrom<u8> for I8F24 {
     type Error = Error;
 
@@ -3928,7 +3727,7 @@ impl cast::From<I8F8> for i8 {
 
 to_ixx!(i8; I15F1, I14F2, I13F3, I12F4, I11F5, I10F6, I9F7);
 
-#[cfg(feature = "try_from")]
+#[cfg(feature = "try-from")]
 impl TryFrom<u8> for I8F8 {
     type Error = Error;
 
